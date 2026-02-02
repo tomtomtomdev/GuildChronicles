@@ -115,4 +115,58 @@ enum Realm: String, Codable, CaseIterable, Identifiable {
             return tier == .tier2 ? 2 : 1
         }
     }
+
+    /// Short description of the realm
+    var description: String {
+        switch self {
+        case .theEmpire: return "A vast human empire with diverse regions"
+        case .theNorthernKingdoms: return "Independent human kingdoms of the north"
+        case .theElvenDominion: return "Ancient elven forests and cities"
+        case .theDwarvenHolds: return "Mountain strongholds of the dwarves"
+        case .theFreeCities: return "Independent city-states and trade hubs"
+        case .theBorderlands: return "Frontier territories between realms"
+        case .theCoastalConfederacy: return "Maritime nations and port cities"
+        case .theDragonWastes: return "Lands scarred by ancient dragons"
+        case .theUnderdarkAccessPoints: return "Surface entries to the deep realms"
+        case .theFeyCourts: return "Lands touched by the Feywild"
+        case .theOrcSteppes: return "Vast plains ruled by orc tribes"
+        case .theMerchantRepublic: return "Wealth-driven trading nation"
+        case .theTheocracyOfTheSun: return "Holy lands of the sun priests"
+        case .theNecromancersBlight: return "Cursed lands of undeath"
+        case .theBarbarianNorthlands: return "Harsh northern tribal territories"
+        case .theIslandChains: return "Scattered islands and archipelagos"
+        case .theDesertCaliphates: return "Sun-scorched desert kingdoms"
+        case .theFrozenReaches: return "Icy wastelands of the far north"
+        case .theJungleKingdoms: return "Dense tropical wilderness"
+        case .theVolcanicIsles: return "Fire-touched island chains"
+        case .thePlanarCrossroads: return "Where planes intersect"
+        case .theRuinsOfTheAncients: return "Remnants of fallen civilizations"
+        case .theShadowfellBorders: return "Lands touched by shadow"
+        case .theFeywildGates: return "Portals to the realm of fey"
+        case .theElementalConvergences: return "Where elemental forces collide"
+        case .theFarRealmsEdge: return "Border of reality itself"
+        }
+    }
+
+    /// Primary regions within this realm
+    var regions: [String] {
+        switch self {
+        case .theEmpire:
+            return ["Imperial Heartland", "Western Marches", "Eastern Provinces", "Southern Coast", "Northern Frontier", "Imperial Capital"]
+        case .theNorthernKingdoms:
+            return ["Highland Realm", "Lakeland", "The Northmarch", "Winter's Edge"]
+        case .theElvenDominion:
+            return ["The Ancient Wood", "Silver Glades", "Starlight Coast"]
+        case .theDwarvenHolds:
+            return ["The Great Hall", "The Deep Mines", "The Outer Holds"]
+        case .theFreeCities:
+            return ["Merchant's Rest", "The Harbor", "Crossroads", "The Old Quarter", "New Town"]
+        case .theBorderlands:
+            return ["The Frontier", "No Man's Land", "The Crossing", "Wild Territories"]
+        case .theCoastalConfederacy:
+            return ["Port Cities", "The Archipelago", "Coral Coast"]
+        default:
+            return [displayName]
+        }
+    }
 }

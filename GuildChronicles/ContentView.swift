@@ -2,20 +2,29 @@
 //  ContentView.swift
 //  GuildChronicles
 //
-//  Created by tomtomtom on 2/1/26.
+//  Root view that handles app navigation
 //
 
 import SwiftUI
 
 struct ContentView: View {
+    @State private var appState = AppState()
+
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        Group {
+            switch appState.currentScreen {
+            case .mainMenu:
+                MainMenuView()
+            case .newCampaign:
+                NewCampaignView()
+            case .settings:
+                SettingsView()
+            case .mainGame:
+                MainGameView()
+            }
         }
-        .padding()
+        .environment(appState)
+        .preferredColorScheme(.dark)
     }
 }
 
