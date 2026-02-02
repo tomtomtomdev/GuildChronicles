@@ -477,26 +477,43 @@ extension QuestStakes {
 
 extension Quest {
     static func sample() -> Quest {
-        Quest(
+        sample(name: "The Goblin Caves", type: .combat, stakes: .medium)
+    }
+
+    static func sample(name: String, type: QuestType, stakes: QuestStakes) -> Quest {
+        let descriptions: [QuestType: String] = [
+            .combat: "A dangerous combat mission requiring skilled warriors.",
+            .exploration: "Explore unknown territories and uncover hidden secrets.",
+            .retrieval: "Retrieve a valuable item from a guarded location.",
+            .investigation: "Investigate mysterious occurrences and gather evidence.",
+            .escort: "Safely escort a VIP through dangerous territory.",
+            .defense: "Defend a location against incoming threats.",
+            .social: "Navigate complex social situations with diplomacy.",
+            .ritual: "Participate in or disrupt a magical ritual.",
+            .siege: "Assault or defend a fortified position.",
+            .assassination: "Eliminate a high-value target discreetly."
+        ]
+
+        return Quest(
             id: UUID(),
-            name: "The Goblin Caves",
-            description: "Clear out a goblin infestation in the caves near the village. The goblins have been raiding local farms and must be stopped.",
-            type: .combat,
-            stakes: .medium,
+            name: name,
+            description: descriptions[type] ?? "A challenging quest awaits.",
+            type: type,
+            stakes: stakes,
             status: .available,
             storyPosition: .prologue,
             segmentCount: 3,
-            estimatedDurationMinutes: 30,
-            minimumPartySize: 3,
-            maximumPartySize: 5,
+            estimatedDurationMinutes: stakes == .low ? 20 : stakes == .high ? 45 : 30,
+            minimumPartySize: stakes == .low ? 2 : 3,
+            maximumPartySize: stakes == .critical ? 6 : 5,
             requiredClasses: [],
-            recommendedLevel: .journeyman,
-            baseGoldReward: 500,
-            experienceReward: 100,
+            recommendedLevel: stakes == .low ? .apprentice : stakes == .high ? .adept : .journeyman,
+            baseGoldReward: stakes == .low ? 250 : stakes == .high ? 1000 : 500,
+            experienceReward: stakes == .low ? 50 : stakes == .high ? 200 : 100,
             lootTableID: UUID(),
-            prologueText: "The village elder approaches you with a worried expression...",
-            successText: "The goblins have been defeated!",
-            failureText: "The goblins proved too strong...",
+            prologueText: "Your guild has received a new mission...",
+            successText: "Mission accomplished!",
+            failureText: "The mission has failed...",
             partialSuccessText: nil,
             result: nil
         )

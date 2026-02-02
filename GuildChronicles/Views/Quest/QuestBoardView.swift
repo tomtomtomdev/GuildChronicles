@@ -38,6 +38,12 @@ struct QuestBoardView: View {
                     }
                 }
             }
+            .navigationDestination(for: Quest.self) { quest in
+                QuestDetailView(quest: quest)
+            }
+            .navigationDestination(for: QuestCategory.self) { category in
+                QuestCategoryListView(category: category)
+            }
             .navigationTitle("Quest Board")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -57,6 +63,79 @@ struct QuestBoardView: View {
     }
 }
 
+// MARK: - Quest Category List
+
+struct QuestCategoryListView: View {
+    let category: QuestCategory
+
+    // Sample quests for demo
+    private var sampleQuests: [Quest] {
+        switch category {
+        case .bounty:
+            return [
+                Quest.sample(name: "Goblin Caves", type: .combat, stakes: .medium),
+                Quest.sample(name: "Bandit Camp Raid", type: .combat, stakes: .high),
+                Quest.sample(name: "Hunt the Dire Wolf", type: .combat, stakes: .low)
+            ]
+        case .patron:
+            return [
+                Quest.sample(name: "Noble's Lost Heirloom", type: .retrieval, stakes: .medium)
+            ]
+        case .dungeon:
+            return [
+                Quest.sample(name: "Crypt of Shadows", type: .exploration, stakes: .high),
+                Quest.sample(name: "Abandoned Mine", type: .exploration, stakes: .medium)
+            ]
+        case .rival:
+            return [
+                Quest.sample(name: "Tournament Challenge", type: .combat, stakes: .medium)
+            ]
+        case .emergency:
+            return []
+        }
+    }
+
+    var body: some View {
+        ZStack {
+            Color(red: 0.1, green: 0.1, blue: 0.15)
+                .ignoresSafeArea()
+
+            if sampleQuests.isEmpty {
+                VStack(spacing: 16) {
+                    Image(systemName: "scroll.fill")
+                        .font(.system(size: 60))
+                        .foregroundStyle(.white.opacity(0.2))
+
+                    Text("No Quests Available")
+                        .font(.headline)
+                        .foregroundStyle(.white.opacity(0.6))
+
+                    Text("Check back later for new opportunities.")
+                        .font(.subheadline)
+                        .foregroundStyle(.white.opacity(0.4))
+                }
+            } else {
+                ScrollView {
+                    LazyVStack(spacing: 12) {
+                        ForEach(sampleQuests) { quest in
+                            NavigationLink(value: quest) {
+                                QuestRowCard(quest: quest)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding()
+                }
+            }
+        }
+        .navigationTitle(category.rawValue)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(Color(red: 0.1, green: 0.1, blue: 0.15), for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
+        .toolbarColorScheme(.dark, for: .navigationBar)
+    }
+}
+
 // MARK: - Types
 
 enum QuestBoardTab: String, CaseIterable {
@@ -72,48 +151,129 @@ struct AvailableQuestsView: View {
         ScrollView {
             VStack(spacing: 16) {
                 // Quest Type Categories
-                QuestCategoryCard(
-                    title: "Bounty Hunts",
-                    description: "Hunt down dangerous monsters and criminals",
-                    icon: "target",
-                    color: .red,
-                    count: 3
-                )
+                NavigationLink(value: QuestCategory.bounty) {
+                        QuestCategoryCard(
+                            title: "Bounty Hunts",
+                            description: "Hunt down dangerous monsters and criminals",
+                            icon: "target",
+                            color: .red,
+                            count: 3
+                        )
+                    }
+                    .buttonStyle(.plain)
 
-                QuestCategoryCard(
-                    title: "Patron Requests",
-                    description: "Special missions from your guild's patrons",
-                    icon: "person.crop.circle.badge.checkmark",
-                    color: .purple,
-                    count: 1
-                )
+                    NavigationLink(value: QuestCategory.patron) {
+                        QuestCategoryCard(
+                            title: "Patron Requests",
+                            description: "Special missions from your guild's patrons",
+                            icon: "person.crop.circle.badge.checkmark",
+                            color: .purple,
+                            count: 1
+                        )
+                    }
+                    .buttonStyle(.plain)
 
-                QuestCategoryCard(
-                    title: "Dungeon Expeditions",
-                    description: "Explore dangerous dungeons for treasure",
-                    icon: "door.left.hand.closed",
-                    color: .orange,
-                    count: 2
-                )
+                    NavigationLink(value: QuestCategory.dungeon) {
+                        QuestCategoryCard(
+                            title: "Dungeon Expeditions",
+                            description: "Explore dangerous dungeons for treasure",
+                            icon: "door.left.hand.closed",
+                            color: .orange,
+                            count: 2
+                        )
+                    }
+                    .buttonStyle(.plain)
 
-                QuestCategoryCard(
-                    title: "Emergency Response",
-                    description: "Urgent situations requiring immediate attention",
-                    icon: "exclamationmark.triangle.fill",
-                    color: .yellow,
-                    count: 0
-                )
+                    QuestCategoryCard(
+                        title: "Emergency Response",
+                        description: "Urgent situations requiring immediate attention",
+                        icon: "exclamationmark.triangle.fill",
+                        color: .yellow,
+                        count: 0
+                    )
+                    .opacity(0.5)
 
-                QuestCategoryCard(
-                    title: "Rival Encounters",
-                    description: "Compete against rival guilds",
-                    icon: "flag.2.crossed.fill",
-                    color: .blue,
-                    count: 1
-                )
+                NavigationLink(value: QuestCategory.rival) {
+                    QuestCategoryCard(
+                        title: "Rival Encounters",
+                        description: "Compete against rival guilds",
+                        icon: "flag.2.crossed.fill",
+                        color: .blue,
+                        count: 1
+                    )
+                }
+                .buttonStyle(.plain)
             }
             .padding()
         }
+    }
+}
+
+enum QuestCategory: String, Hashable {
+    case bounty = "Bounty Hunts"
+    case patron = "Patron Requests"
+    case dungeon = "Dungeon Expeditions"
+    case emergency = "Emergency Response"
+    case rival = "Rival Encounters"
+}
+
+struct QuestRowCard: View {
+    let quest: Quest
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: quest.type.icon)
+                .font(.title2)
+                .foregroundStyle(quest.stakes.uiColor)
+                .frame(width: 44, height: 44)
+                .background(
+                    Circle()
+                        .fill(quest.stakes.uiColor.opacity(0.2))
+                )
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(quest.name)
+                    .font(.headline)
+                    .foregroundStyle(.white)
+
+                HStack(spacing: 8) {
+                    Text(quest.type.displayName)
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.6))
+
+                    Text("•")
+                        .foregroundStyle(.white.opacity(0.3))
+
+                    Text(quest.stakes.displayName)
+                        .font(.caption)
+                        .foregroundStyle(quest.stakes.uiColor)
+                }
+
+                HStack(spacing: 12) {
+                    Label("\(quest.effectiveReward)", systemImage: "banknote.fill")
+                        .font(.caption)
+                        .foregroundStyle(.yellow)
+
+                    Label("\(quest.minimumPartySize)-\(quest.maximumPartySize)", systemImage: "person.3.fill")
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.6))
+                }
+            }
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .foregroundStyle(.white.opacity(0.3))
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.white.opacity(0.05))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .strokeBorder(quest.stakes.uiColor.opacity(0.3), lineWidth: 1)
+                )
+        )
     }
 }
 

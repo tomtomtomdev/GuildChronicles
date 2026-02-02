@@ -12,6 +12,7 @@ struct RosterListView: View {
     @State private var searchText: String = ""
     @State private var filterClass: AdventurerClass? = nil
     @State private var sortOption: RosterSortOption = .name
+    @State private var showingRecruitment: Bool = false
 
     private var game: GameState? { appState.gameState }
     private var guild: Guild? { appState.playerGuild }
@@ -71,12 +72,15 @@ struct RosterListView: View {
 
                     // Roster List
                     if rosterAdventurers.isEmpty {
-                        EmptyRosterView()
+                        EmptyRosterView(showRecruitment: $showingRecruitment)
                     } else {
                         ScrollView {
                             LazyVStack(spacing: 12) {
                                 ForEach(filteredAdventurers) { adventurer in
-                                    AdventurerRowCard(adventurer: adventurer)
+                                    NavigationLink(value: adventurer) {
+                                        AdventurerRowCard(adventurer: adventurer)
+                                    }
+                                    .buttonStyle(.plain)
                                 }
                             }
                             .padding()
@@ -84,17 +88,23 @@ struct RosterListView: View {
                     }
                 }
             }
+            .navigationDestination(for: Adventurer.self) { adventurer in
+                AdventurerDetailView(adventurer: adventurer)
+            }
             .navigationTitle("Roster")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        // Recruit action
+                        showingRecruitment = true
                     } label: {
                         Image(systemName: "person.badge.plus")
                             .foregroundStyle(.green)
                     }
                 }
+            }
+            .sheet(isPresented: $showingRecruitment) {
+                RecruitmentView()
             }
             .toolbarBackground(Color(red: 0.1, green: 0.1, blue: 0.15), for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
@@ -325,6 +335,8 @@ struct StatusPill: View {
 }
 
 struct EmptyRosterView: View {
+    @Binding var showRecruitment: Bool
+
     var body: some View {
         VStack(spacing: 16) {
             Spacer()
@@ -344,7 +356,7 @@ struct EmptyRosterView: View {
                 .padding(.horizontal, 40)
 
             Button {
-                // Navigate to recruitment
+                showRecruitment = true
             } label: {
                 HStack {
                     Image(systemName: "person.badge.plus")

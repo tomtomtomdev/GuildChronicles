@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Adventurer: Identifiable, Codable, Equatable {
+struct Adventurer: Identifiable, Codable, Equatable, Hashable {
     let id: UUID
     var firstName: String
     var lastName: String
@@ -131,6 +131,14 @@ struct Adventurer: Identifiable, Codable, Equatable {
             injuries: [],
             isFullyKnown: false
         )
+    }
+}
+
+// MARK: - Hashable Conformance
+
+extension Adventurer {
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
     }
 }
 

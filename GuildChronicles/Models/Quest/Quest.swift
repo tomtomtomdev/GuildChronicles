@@ -161,7 +161,7 @@ enum QuestStatus: String, Codable {
 }
 
 /// An individual quest within a chain
-struct Quest: Identifiable, Codable, Equatable {
+struct Quest: Identifiable, Codable, Equatable, Hashable {
     let id: UUID
     var name: String
     var description: String
@@ -213,6 +213,12 @@ struct Quest: Identifiable, Codable, Equatable {
     }
 
     // MARK: - Factory
+
+    // MARK: - Hashable
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
 
     static func create(
         name: String,
