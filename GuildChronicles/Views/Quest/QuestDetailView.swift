@@ -40,6 +40,16 @@ struct QuestDetailView: View {
                         availableAdventurers: availableAdventurers
                     )
 
+                    // Success Chance Preview
+                    if !selectedPartyMembers.isEmpty {
+                        SuccessChancePreview(
+                            successChance: appState.calculateSuccessChance(
+                                quest: quest,
+                                partyMemberIds: selectedPartyMembers
+                            )
+                        )
+                    }
+
                     // Accept Quest Button
                     AcceptQuestButton(
                         canAccept: canAcceptQuest,
@@ -72,7 +82,93 @@ struct QuestDetailView: View {
     }
 
     private func acceptQuest() {
-        dismiss()
+        let success = appState.acceptQuest(
+            questId: quest.id,
+            partyMemberIds: selectedPartyMembers
+        )
+        if success {
+            dismiss()
+        }
+    }
+}
+
+// MARK: - Success Chance Preview
+
+struct SuccessChancePreview: View {
+    let successChance: Double
+
+    private var chancePercentage: Int {
+        Int(successChance * 100)
+    }
+
+    private var chanceColor: Color {
+        if successChance >= 0.8 { return .green }
+        if successChance >= 0.6 { return .yellow }
+        if successChance >= 0.4 { return .orange }
+        return .red
+    }
+
+    private var chanceDescription: String {
+        if successChance >= 0.8 { return "Excellent" }
+        if successChance >= 0.6 { return "Good" }
+        if successChance >= 0.4 { return "Risky" }
+        return "Dangerous"
+    }
+
+    var body: some View {
+        VStack(spacing: 12) {
+            HStack {
+                Image(systemName: "chart.bar.fill")
+                    .foregroundStyle(chanceColor)
+                Text("Success Forecast")
+                    .font(.headline)
+                    .foregroundStyle(.white)
+                Spacer()
+            }
+
+            HStack(spacing: 16) {
+                // Circular progress indicator
+                ZStack {
+                    Circle()
+                        .stroke(Color.white.opacity(0.1), lineWidth: 8)
+                        .frame(width: 70, height: 70)
+
+                    Circle()
+                        .trim(from: 0, to: successChance)
+                        .stroke(chanceColor, style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                        .frame(width: 70, height: 70)
+                        .rotationEffect(.degrees(-90))
+
+                    Text("\(chancePercentage)%")
+                        .font(.headline)
+                        .fontWeight(.bold)
+                        .foregroundStyle(.white)
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(chanceDescription)
+                        .font(.title3)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(chanceColor)
+
+                    Text("Estimated success rate based on party strength vs quest difficulty")
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.6))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer()
+            }
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(chanceColor.opacity(0.1))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .strokeBorder(chanceColor.opacity(0.3), lineWidth: 1)
+                )
+        )
     }
 }
 

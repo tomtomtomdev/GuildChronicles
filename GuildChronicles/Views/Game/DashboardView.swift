@@ -60,8 +60,18 @@ struct DashboardView: View {
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        // Menu action
+                    Menu {
+                        Button {
+                            _ = appState.quickSave()
+                        } label: {
+                            Label("Quick Save", systemImage: "square.and.arrow.down")
+                        }
+
+                        Button {
+                            appState.returnToMainMenu()
+                        } label: {
+                            Label("Main Menu", systemImage: "house")
+                        }
                     } label: {
                         Image(systemName: "line.3.horizontal")
                             .foregroundStyle(.white)
@@ -278,6 +288,12 @@ struct TreasuryCard: View {
 }
 
 struct ActiveQuestsSummary: View {
+    @Environment(AppState.self) private var appState
+
+    private var activeQuests: [Quest] {
+        appState.gameState?.activeQuests ?? []
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -286,24 +302,48 @@ struct ActiveQuestsSummary: View {
                 Text("Active Quests")
                     .font(.headline)
                     .foregroundStyle(.white)
+
+                if !activeQuests.isEmpty {
+                    Text("(\(activeQuests.count))")
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.5))
+                }
+
                 Spacer()
 
-                Button("View All") {
-                    // Navigate to quests
+                Button {
+                    appState.selectedTab = .quests
+                } label: {
+                    Text("View All")
+                        .font(.caption)
+                        .foregroundStyle(.blue)
                 }
-                .font(.caption)
-                .foregroundStyle(.blue)
             }
 
-            // Placeholder for active quests
-            HStack {
-                Image(systemName: "questionmark.circle")
-                    .foregroundStyle(.white.opacity(0.3))
-                Text("No active quests")
-                    .foregroundStyle(.white.opacity(0.5))
+            if activeQuests.isEmpty {
+                HStack {
+                    Image(systemName: "scroll")
+                        .foregroundStyle(.white.opacity(0.3))
+                    Text("No active quests - visit Quest Board to accept missions")
+                        .foregroundStyle(.white.opacity(0.5))
+                        .font(.subheadline)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 20)
+            } else {
+                VStack(spacing: 8) {
+                    ForEach(activeQuests.prefix(3)) { quest in
+                        ActiveQuestRow(quest: quest, appState: appState)
+                    }
+
+                    if activeQuests.count > 3 {
+                        Text("+ \(activeQuests.count - 3) more quests")
+                            .font(.caption)
+                            .foregroundStyle(.white.opacity(0.5))
+                            .frame(maxWidth: .infinity, alignment: .center)
+                    }
+                }
             }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 20)
         }
         .padding()
         .background(
@@ -316,6 +356,84 @@ struct ActiveQuestsSummary: View {
         )
     }
 }
+
+struct ActiveQuestRow: View {
+    let quest: Quest
+    let appState: AppState
+
+    private var partySize: Int {
+        appState.getParty(for: quest.id)?.size ?? 0
+    }
+
+    var body: some View {
+        HStack(spacing: 12) {
+            // Quest type icon
+            Image(systemName: questTypeIcon)
+                .font(.title3)
+                .foregroundStyle(quest.stakes.uiColor)
+                .frame(width: 32, height: 32)
+                .background(
+                    Circle()
+                        .fill(quest.stakes.uiColor.opacity(0.2))
+                )
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(quest.name)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+
+                HStack(spacing: 8) {
+                    Label("\(partySize)", systemImage: "person.fill")
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.6))
+
+                    Text("•")
+                        .foregroundStyle(.white.opacity(0.3))
+
+                    Text(quest.stakes.displayName)
+                        .font(.caption)
+                        .foregroundStyle(quest.stakes.uiColor)
+                }
+            }
+
+            Spacer()
+
+            // Status indicator
+            VStack(alignment: .trailing, spacing: 2) {
+                Image(systemName: "hourglass")
+                    .foregroundStyle(.cyan)
+
+                Text("In Progress")
+                    .font(.caption2)
+                    .foregroundStyle(.cyan.opacity(0.8))
+            }
+        }
+        .padding(.vertical, 8)
+        .padding(.horizontal, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(quest.stakes.uiColor.opacity(0.1))
+        )
+    }
+
+    private var questTypeIcon: String {
+        switch quest.type {
+        case .investigation: return "magnifyingglass"
+        case .combat: return "bolt.fill"
+        case .exploration: return "map.fill"
+        case .social: return "person.2.fill"
+        case .ritual: return "wand.and.stars"
+        case .siege: return "building.2.fill"
+        case .escort: return "figure.walk"
+        case .retrieval: return "archivebox.fill"
+        case .assassination: return "target"
+        case .defense: return "shield.fill"
+        }
+    }
+}
+
 
 struct RecentEventsCard: View {
     @Environment(AppState.self) private var appState
