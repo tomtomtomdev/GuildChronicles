@@ -23,6 +23,14 @@ final class GameState {
     var allAdventurers: [UUID: Adventurer]
     var freeAgents: [UUID]
 
+    // MARK: - Quest State
+    var availableQuests: [Quest] = []
+    var activeQuests: [Quest] = []
+    var completedQuests: [Quest] = []
+
+    // MARK: - Event History
+    var events: [GameEvent] = []
+
     // MARK: - Game Settings
     var settings: GameSettings
 
@@ -44,6 +52,18 @@ final class GameState {
 
     var freeAgentAdventurers: [Adventurer] {
         freeAgents.compactMap { allAdventurers[$0] }
+    }
+
+    var currentTimestamp: GameTimestamp {
+        GameTimestamp(
+            season: currentSeason,
+            month: currentMonth,
+            week: weekInSeason
+        )
+    }
+
+    var recentEvents: [GameEvent] {
+        Array(events.suffix(20))
     }
 
     // MARK: - Init
@@ -94,6 +114,24 @@ final class GameState {
             let level = AdventurerLevel.allCases.randomElement()!
             let adventurer = Adventurer.random(level: level)
             addAdventurer(adventurer)
+        }
+    }
+
+    // MARK: - Event Management
+
+    func addEvent(_ type: EventType, message: String, relatedEntityID: UUID? = nil) {
+        let event = GameEvent(
+            type: type,
+            message: message,
+            timestamp: currentTimestamp,
+            relatedEntityID: relatedEntityID
+        )
+        events.append(event)
+    }
+
+    func clearOldEvents(keepCount: Int = 100) {
+        if events.count > keepCount {
+            events = Array(events.suffix(keepCount))
         }
     }
 }

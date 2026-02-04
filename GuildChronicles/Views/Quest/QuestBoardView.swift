@@ -66,32 +66,27 @@ struct QuestBoardView: View {
 // MARK: - Quest Category List
 
 struct QuestCategoryListView: View {
+    @Environment(AppState.self) private var appState
     let category: QuestCategory
 
-    // Sample quests for demo
-    private var sampleQuests: [Quest] {
-        switch category {
-        case .bounty:
-            return [
-                Quest.sample(name: "Goblin Caves", type: .combat, stakes: .medium),
-                Quest.sample(name: "Bandit Camp Raid", type: .combat, stakes: .high),
-                Quest.sample(name: "Hunt the Dire Wolf", type: .combat, stakes: .low)
-            ]
-        case .patron:
-            return [
-                Quest.sample(name: "Noble's Lost Heirloom", type: .retrieval, stakes: .medium)
-            ]
-        case .dungeon:
-            return [
-                Quest.sample(name: "Crypt of Shadows", type: .exploration, stakes: .high),
-                Quest.sample(name: "Abandoned Mine", type: .exploration, stakes: .medium)
-            ]
-        case .rival:
-            return [
-                Quest.sample(name: "Tournament Challenge", type: .combat, stakes: .medium)
-            ]
-        case .emergency:
-            return []
+    private var availableQuests: [Quest] {
+        appState.gameState?.availableQuests ?? []
+    }
+
+    private var filteredQuests: [Quest] {
+        availableQuests.filter { quest in
+            switch category {
+            case .bounty:
+                return quest.type == .combat || quest.type == .assassination
+            case .patron:
+                return quest.type == .retrieval || quest.type == .escort || quest.type == .social
+            case .dungeon:
+                return quest.type == .exploration
+            case .rival:
+                return quest.type == .defense || quest.type == .siege
+            case .emergency:
+                return quest.stakes == .critical
+            }
         }
     }
 
@@ -100,7 +95,7 @@ struct QuestCategoryListView: View {
             Color(red: 0.1, green: 0.1, blue: 0.15)
                 .ignoresSafeArea()
 
-            if sampleQuests.isEmpty {
+            if filteredQuests.isEmpty {
                 VStack(spacing: 16) {
                     Image(systemName: "scroll.fill")
                         .font(.system(size: 60))
@@ -117,7 +112,7 @@ struct QuestCategoryListView: View {
             } else {
                 ScrollView {
                     LazyVStack(spacing: 12) {
-                        ForEach(sampleQuests) { quest in
+                        ForEach(filteredQuests) { quest in
                             NavigationLink(value: quest) {
                                 QuestRowCard(quest: quest)
                             }
@@ -147,62 +142,121 @@ enum QuestBoardTab: String, CaseIterable {
 // MARK: - Subviews
 
 struct AvailableQuestsView: View {
+    @Environment(AppState.self) private var appState
+
+    private var availableQuests: [Quest] {
+        appState.gameState?.availableQuests ?? []
+    }
+
+    private func questCount(for category: QuestCategory) -> Int {
+        availableQuests.filter { quest in
+            switch category {
+            case .bounty:
+                return quest.type == .combat || quest.type == .assassination
+            case .patron:
+                return quest.type == .retrieval || quest.type == .escort || quest.type == .social
+            case .dungeon:
+                return quest.type == .exploration
+            case .rival:
+                return quest.type == .defense || quest.type == .siege
+            case .emergency:
+                return quest.stakes == .critical
+            }
+        }.count
+    }
+
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
+                let bountyCount = questCount(for: .bounty)
+                let patronCount = questCount(for: .patron)
+                let dungeonCount = questCount(for: .dungeon)
+                let rivalCount = questCount(for: .rival)
+                let emergencyCount = questCount(for: .emergency)
+
                 // Quest Type Categories
-                NavigationLink(value: QuestCategory.bounty) {
+                if bountyCount > 0 {
+                    NavigationLink(value: QuestCategory.bounty) {
                         QuestCategoryCard(
                             title: "Bounty Hunts",
                             description: "Hunt down dangerous monsters and criminals",
                             icon: "target",
                             color: .red,
-                            count: 3
+                            count: bountyCount
                         )
                     }
                     .buttonStyle(.plain)
+                }
 
+                if patronCount > 0 {
                     NavigationLink(value: QuestCategory.patron) {
                         QuestCategoryCard(
                             title: "Patron Requests",
                             description: "Special missions from your guild's patrons",
                             icon: "person.crop.circle.badge.checkmark",
                             color: .purple,
-                            count: 1
+                            count: patronCount
                         )
                     }
                     .buttonStyle(.plain)
+                }
 
+                if dungeonCount > 0 {
                     NavigationLink(value: QuestCategory.dungeon) {
                         QuestCategoryCard(
                             title: "Dungeon Expeditions",
                             description: "Explore dangerous dungeons for treasure",
                             icon: "door.left.hand.closed",
                             color: .orange,
-                            count: 2
+                            count: dungeonCount
                         )
                     }
                     .buttonStyle(.plain)
-
-                    QuestCategoryCard(
-                        title: "Emergency Response",
-                        description: "Urgent situations requiring immediate attention",
-                        icon: "exclamationmark.triangle.fill",
-                        color: .yellow,
-                        count: 0
-                    )
-                    .opacity(0.5)
-
-                NavigationLink(value: QuestCategory.rival) {
-                    QuestCategoryCard(
-                        title: "Rival Encounters",
-                        description: "Compete against rival guilds",
-                        icon: "flag.2.crossed.fill",
-                        color: .blue,
-                        count: 1
-                    )
                 }
-                .buttonStyle(.plain)
+
+                if emergencyCount > 0 {
+                    NavigationLink(value: QuestCategory.emergency) {
+                        QuestCategoryCard(
+                            title: "Emergency Response",
+                            description: "Urgent situations requiring immediate attention",
+                            icon: "exclamationmark.triangle.fill",
+                            color: .yellow,
+                            count: emergencyCount
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                if rivalCount > 0 {
+                    NavigationLink(value: QuestCategory.rival) {
+                        QuestCategoryCard(
+                            title: "Rival Encounters",
+                            description: "Compete against rival guilds",
+                            icon: "flag.2.crossed.fill",
+                            color: .blue,
+                            count: rivalCount
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                if availableQuests.isEmpty {
+                    VStack(spacing: 16) {
+                        Image(systemName: "scroll.fill")
+                            .font(.system(size: 60))
+                            .foregroundStyle(.white.opacity(0.2))
+
+                        Text("No Quests Available")
+                            .font(.headline)
+                            .foregroundStyle(.white.opacity(0.6))
+
+                        Text("Advance time to refresh the quest board.")
+                            .font(.subheadline)
+                            .foregroundStyle(.white.opacity(0.4))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 40)
+                }
             }
             .padding()
         }
@@ -343,25 +397,45 @@ struct QuestCategoryCard: View {
 }
 
 struct ActiveQuestsView: View {
+    @Environment(AppState.self) private var appState
+
+    private var activeQuests: [Quest] {
+        appState.gameState?.activeQuests ?? []
+    }
+
     var body: some View {
-        VStack(spacing: 16) {
-            Spacer()
+        if activeQuests.isEmpty {
+            VStack(spacing: 16) {
+                Spacer()
 
-            Image(systemName: "scroll.fill")
-                .font(.system(size: 60))
-                .foregroundStyle(.white.opacity(0.2))
+                Image(systemName: "scroll.fill")
+                    .font(.system(size: 60))
+                    .foregroundStyle(.white.opacity(0.2))
 
-            Text("No Active Quests")
-                .font(.headline)
-                .foregroundStyle(.white.opacity(0.6))
+                Text("No Active Quests")
+                    .font(.headline)
+                    .foregroundStyle(.white.opacity(0.6))
 
-            Text("Accept a quest from the Available tab to get started.")
-                .font(.subheadline)
-                .foregroundStyle(.white.opacity(0.4))
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 40)
+                Text("Accept a quest from the Available tab to get started.")
+                    .font(.subheadline)
+                    .foregroundStyle(.white.opacity(0.4))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 40)
 
-            Spacer()
+                Spacer()
+            }
+        } else {
+            ScrollView {
+                LazyVStack(spacing: 12) {
+                    ForEach(activeQuests) { quest in
+                        NavigationLink(value: quest) {
+                            QuestRowCard(quest: quest)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding()
+            }
         }
     }
 }

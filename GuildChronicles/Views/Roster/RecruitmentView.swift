@@ -135,9 +135,22 @@ struct RecruitmentView: View {
     }
 
     private func hireAdventurer(_ adventurer: Adventurer) {
-        // This would update game state in a real implementation
-        // For now, just dismiss
-        dismiss()
+        guard let gameState = appState.gameState,
+              var guild = appState.playerGuild else { return }
+
+        let result = RecruitmentService.hireAdventurer(
+            adventurer.id,
+            into: &guild,
+            gameState: gameState
+        )
+
+        switch result {
+        case .success:
+            appState.playerGuild = guild
+            dismiss()
+        case .failure(let error):
+            appState.showError(error.message)
+        }
     }
 }
 

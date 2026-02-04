@@ -31,6 +31,9 @@ struct Guild: Identifiable, Codable, Equatable {
     var ledger: FinancialLedger
     var loans: [Loan]
 
+    // Inventory
+    var inventory: GuildInventory
+
     // Reputation & Statistics
     var reputation: GuildReputation
     var statistics: GuildStatistics
@@ -130,6 +133,7 @@ struct Guild: Identifiable, Codable, Equatable {
             finances: .starter,
             ledger: .empty,
             loans: [],
+            inventory: .starter,
             reputation: GuildReputation(local: 50, regional: 20, continental: 0),
             statistics: GuildStatistics(),
             isPlayerControlled: isPlayerControlled

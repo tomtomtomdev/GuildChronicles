@@ -127,9 +127,18 @@ struct FacilitiesSection: View {
 }
 
 struct FacilityCard: View {
+    @Environment(AppState.self) private var appState
     let facility: Facility
     let name: String
     let icon: String
+
+    private var upgradeCost: Int {
+        GuildService.upgradeCost(for: facility)
+    }
+
+    private var canUpgrade: Bool {
+        upgradeCost > 0 && (appState.playerGuild?.finances.treasury ?? 0) >= upgradeCost
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -186,9 +195,20 @@ struct FacilityCard: View {
 
                 Spacer()
 
-                Button("Upgrade") { }
-                    .font(.caption)
-                    .foregroundStyle(.blue)
+                if upgradeCost > 0 {
+                    Button {
+                        upgradeFacility()
+                    } label: {
+                        Text("Upgrade (\(upgradeCost)g)")
+                            .font(.caption)
+                    }
+                    .foregroundStyle(canUpgrade ? .blue : .gray)
+                    .disabled(!canUpgrade)
+                } else {
+                    Text("Max Level")
+                        .font(.caption)
+                        .foregroundStyle(.green)
+                }
             }
         }
         .padding()
@@ -210,12 +230,32 @@ struct FacilityCard: View {
         default: return .red
         }
     }
+
+    private func upgradeFacility() {
+        guard let gameState = appState.gameState,
+              var guild = appState.playerGuild else { return }
+
+        let result = GuildService.upgradeFacility(
+            facility.type,
+            guild: &guild,
+            gameState: gameState
+        )
+
+        switch result {
+        case .success:
+            appState.playerGuild = guild
+        case .failure(let error):
+            appState.showError(error.message)
+        }
+    }
 }
 
 // MARK: - Staff Section
 
 struct StaffSection: View {
+    @Environment(AppState.self) private var appState
     let staff: [StaffMember]
+    @State private var showingHireMenu = false
 
     var body: some View {
         VStack(spacing: 16) {
@@ -227,8 +267,14 @@ struct StaffSection: View {
                 }
             }
 
-            Button {
-                // Hire staff
+            Menu {
+                ForEach(StaffRole.allCases, id: \.self) { role in
+                    Button {
+                        hireStaff(role: role)
+                    } label: {
+                        Label(role.displayName, systemImage: role.uiIcon)
+                    }
+                }
             } label: {
                 HStack {
                     Image(systemName: "person.badge.plus")
@@ -244,6 +290,24 @@ struct StaffSection: View {
             }
         }
         .padding()
+    }
+
+    private func hireStaff(role: StaffRole) {
+        guard let gameState = appState.gameState,
+              var guild = appState.playerGuild else { return }
+
+        let result = GuildService.hireStaff(
+            role: role,
+            guild: &guild,
+            gameState: gameState
+        )
+
+        switch result {
+        case .success:
+            appState.playerGuild = guild
+        case .failure(let error):
+            appState.showError(error.message)
+        }
     }
 }
 
@@ -431,6 +495,7 @@ struct PatronCard: View {
 // MARK: - Finances Section
 
 struct FinancesSection: View {
+    @Environment(AppState.self) private var appState
     let guild: Guild
 
     var body: some View {
@@ -520,8 +585,27 @@ struct FinancesSection: View {
                 )
             }
 
-            Button {
-                // Request loan
+            Menu {
+                Button {
+                    requestLoan(type: .merchant, amount: 1000)
+                } label: {
+                    Label("1,000 gold (Merchant)", systemImage: "banknote")
+                }
+                Button {
+                    requestLoan(type: .merchant, amount: 2500)
+                } label: {
+                    Label("2,500 gold (Merchant)", systemImage: "banknote")
+                }
+                Button {
+                    requestLoan(type: .temple, amount: 1000)
+                } label: {
+                    Label("1,000 gold (Temple - Low Interest)", systemImage: "building.columns")
+                }
+                Button {
+                    requestLoan(type: .temple, amount: 2500)
+                } label: {
+                    Label("2,500 gold (Temple - Low Interest)", systemImage: "building.columns")
+                }
             } label: {
                 HStack {
                     Image(systemName: "dollarsign.circle.fill")
@@ -537,6 +621,25 @@ struct FinancesSection: View {
             }
         }
         .padding()
+    }
+
+    private func requestLoan(type: LoanType, amount: Int) {
+        guard let gameState = appState.gameState,
+              var guild = appState.playerGuild else { return }
+
+        let result = GuildService.takeLoan(
+            type: type,
+            amount: amount,
+            guild: &guild,
+            gameState: gameState
+        )
+
+        switch result {
+        case .success:
+            appState.playerGuild = guild
+        case .failure(let error):
+            appState.showError(error.message)
+        }
     }
 }
 

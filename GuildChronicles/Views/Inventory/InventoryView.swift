@@ -35,15 +35,23 @@ struct InventoryView: View {
                     .background(Color.black.opacity(0.2))
 
                     // Inventory Content
-                    ScrollView {
-                        VStack(spacing: 16) {
-                            // Gold Display
-                            GoldDisplayCard()
+                    if let guild = appState.playerGuild {
+                        ScrollView {
+                            VStack(spacing: 16) {
+                                // Gold Display
+                                GoldDisplayCard()
 
-                            // Inventory placeholder
-                            InventoryPlaceholder(category: selectedCategory)
+                                // Real inventory content
+                                InventoryContent(
+                                    inventory: guild.inventory,
+                                    category: selectedCategory
+                                )
+                            }
+                            .padding()
                         }
-                        .padding()
+                    } else {
+                        Text("No guild data")
+                            .foregroundStyle(.white.opacity(0.5))
                     }
                 }
             }
@@ -181,7 +189,8 @@ struct GoldDisplayCard: View {
     }
 }
 
-struct InventoryPlaceholder: View {
+struct InventoryContent: View {
+    let inventory: GuildInventory
     let category: InventoryCategory
 
     private var showWeapons: Bool {
@@ -192,32 +201,79 @@ struct InventoryPlaceholder: View {
         category == .all || category == .armor
     }
 
+    private var showAccessories: Bool {
+        category == .all || category == .accessories
+    }
+
     private var showConsumables: Bool {
         category == .all || category == .consumables
     }
 
-    private var showEmpty: Bool {
-        category == .accessories || category == .materials
+    private var hasItems: Bool {
+        switch category {
+        case .all:
+            return inventory.totalItems > 0
+        case .weapons:
+            return !inventory.weapons.isEmpty
+        case .armor:
+            return !inventory.armors.isEmpty
+        case .accessories:
+            return !inventory.accessories.isEmpty
+        case .consumables:
+            return !inventory.consumables.isEmpty
+        case .materials:
+            return false
+        }
     }
 
     var body: some View {
-        VStack(spacing: 20) {
-            if showWeapons {
-                InventoryItemRow(name: "Iron Sword", type: "Weapon", rarity: .common, quantity: 3)
-                InventoryItemRow(name: "Steel Longsword", type: "Weapon", rarity: .uncommon, quantity: 1)
-            }
-
-            if showArmor {
-                InventoryItemRow(name: "Leather Armor", type: "Armor", rarity: .common, quantity: 2)
-            }
-
-            if showConsumables {
-                InventoryItemRow(name: "Health Potion", type: "Consumable", rarity: .common, quantity: 10)
-                InventoryItemRow(name: "Mana Potion", type: "Consumable", rarity: .common, quantity: 5)
-            }
-
-            if showEmpty {
+        VStack(spacing: 12) {
+            if !hasItems {
                 EmptyInventoryMessage(category: category)
+            } else {
+                if showWeapons {
+                    ForEach(Array(inventory.weapons.values), id: \.id) { weapon in
+                        InventoryItemRow(
+                            name: weapon.baseItem.name,
+                            type: "Weapon",
+                            rarity: weapon.baseItem.rarity,
+                            quantity: 1
+                        )
+                    }
+                }
+
+                if showArmor {
+                    ForEach(Array(inventory.armors.values), id: \.id) { armor in
+                        InventoryItemRow(
+                            name: armor.baseItem.name,
+                            type: "Armor",
+                            rarity: armor.baseItem.rarity,
+                            quantity: 1
+                        )
+                    }
+                }
+
+                if showAccessories {
+                    ForEach(Array(inventory.accessories.values), id: \.id) { accessory in
+                        InventoryItemRow(
+                            name: accessory.baseItem.name,
+                            type: "Accessory",
+                            rarity: accessory.baseItem.rarity,
+                            quantity: 1
+                        )
+                    }
+                }
+
+                if showConsumables {
+                    ForEach(Array(inventory.consumables.values), id: \.id) { consumable in
+                        InventoryItemRow(
+                            name: consumable.baseItem.name,
+                            type: "Consumable",
+                            rarity: consumable.baseItem.rarity,
+                            quantity: 1
+                        )
+                    }
+                }
             }
         }
     }

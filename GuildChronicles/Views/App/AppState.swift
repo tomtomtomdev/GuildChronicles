@@ -88,6 +88,12 @@ final class AppState {
         // Link them
         game.playerGuildID = guild.id
 
+        // Record initial events
+        game.addEvent(.guildFounded, message: "\(guildName) has been founded!", relatedEntityID: guild.id)
+
+        // Generate initial available quests
+        game.availableQuests = QuestService.generateAvailableQuests(for: guild, count: 8)
+
         self.gameState = game
         self.playerGuild = guild
 
@@ -98,6 +104,16 @@ final class AppState {
     func showError(_ message: String) {
         alertMessage = message
         showingAlert = true
+    }
+
+    // MARK: - Time Progression
+
+    func advanceWeek() {
+        guard let gameState = gameState,
+              var guild = playerGuild else { return }
+
+        TimeService.advanceWeek(gameState: gameState, guild: &guild)
+        playerGuild = guild
     }
 }
 

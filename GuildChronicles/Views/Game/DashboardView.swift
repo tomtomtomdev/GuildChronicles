@@ -47,6 +47,18 @@ struct DashboardView: View {
             .navigationTitle(guild?.name ?? "Dashboard")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        appState.advanceWeek()
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "clock.arrow.circlepath")
+                            Text("Next Week")
+                        }
+                        .font(.subheadline)
+                        .foregroundStyle(.cyan)
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         // Menu action
@@ -306,6 +318,12 @@ struct ActiveQuestsSummary: View {
 }
 
 struct RecentEventsCard: View {
+    @Environment(AppState.self) private var appState
+
+    private var recentEvents: [GameEvent] {
+        appState.gameState?.recentEvents.reversed() ?? []
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -317,28 +335,26 @@ struct RecentEventsCard: View {
                 Spacer()
             }
 
-            // Placeholder events
-            VStack(alignment: .leading, spacing: 8) {
-                EventRow(
-                    icon: "flag.fill",
-                    text: "Guild founded!",
-                    time: "Just now",
-                    color: .green
-                )
-
-                EventRow(
-                    icon: "person.badge.plus",
-                    text: "Staff hired: Combat Instructor",
-                    time: "Just now",
-                    color: .blue
-                )
-
-                EventRow(
-                    icon: "building.2.fill",
-                    text: "Guild Hall established",
-                    time: "Just now",
-                    color: .purple
-                )
+            if recentEvents.isEmpty {
+                HStack {
+                    Image(systemName: "tray")
+                        .foregroundStyle(.white.opacity(0.3))
+                    Text("No events yet")
+                        .foregroundStyle(.white.opacity(0.5))
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 20)
+            } else {
+                VStack(alignment: .leading, spacing: 8) {
+                    ForEach(recentEvents.prefix(5)) { event in
+                        EventRow(
+                            icon: event.type.icon,
+                            text: event.message,
+                            time: event.timestamp.shortDisplay,
+                            color: event.type.color
+                        )
+                    }
+                }
             }
         }
         .padding()
