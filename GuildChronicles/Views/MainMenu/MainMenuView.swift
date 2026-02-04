@@ -9,6 +9,7 @@ import SwiftUI
 
 struct MainMenuView: View {
     @Environment(AppState.self) private var appState
+    @State private var showingLoadGame = false
 
     var body: some View {
         ZStack {
@@ -70,6 +71,15 @@ struct MainMenuView: View {
                     }
 
                     MenuButton(
+                        title: "Load Game",
+                        icon: "folder.fill",
+                        color: .orange,
+                        isDisabled: appState.savedGames.isEmpty
+                    ) {
+                        showingLoadGame = true
+                    }
+
+                    MenuButton(
                         title: "Settings",
                         icon: "gearshape.fill",
                         color: .gray
@@ -87,6 +97,112 @@ struct MainMenuView: View {
                     .foregroundStyle(.white.opacity(0.4))
                     .padding(.bottom, 20)
             }
+        }
+        .sheet(isPresented: $showingLoadGame) {
+            LoadGameView()
+        }
+    }
+}
+
+// MARK: - Load Game View
+
+struct LoadGameView: View {
+    @Environment(AppState.self) private var appState
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color(red: 0.1, green: 0.1, blue: 0.15)
+                    .ignoresSafeArea()
+
+                if appState.savedGames.isEmpty {
+                    VStack(spacing: 16) {
+                        Image(systemName: "folder.badge.questionmark")
+                            .font(.system(size: 60))
+                            .foregroundStyle(.white.opacity(0.3))
+
+                        Text("No Saved Games")
+                            .font(.title2)
+                            .foregroundStyle(.white.opacity(0.6))
+
+                        Text("Start a new campaign to begin your adventure")
+                            .font(.subheadline)
+                            .foregroundStyle(.white.opacity(0.4))
+                    }
+                } else {
+                    List {
+                        ForEach(appState.savedGames) { save in
+                            SavedGameRow(save: save) {
+                                if appState.loadGame(name: save.name) {
+                                    dismiss()
+                                }
+                            }
+                            .listRowBackground(Color.white.opacity(0.05))
+                        }
+                        .onDelete { indexSet in
+                            for index in indexSet {
+                                let save = appState.savedGames[index]
+                                _ = appState.deleteSave(name: save.name)
+                            }
+                        }
+                    }
+                    .scrollContentBackground(.hidden)
+                }
+            }
+            .navigationTitle("Load Game")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                    .foregroundStyle(.white)
+                }
+            }
+            .toolbarBackground(Color(red: 0.1, green: 0.1, blue: 0.15), for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
+        }
+    }
+}
+
+struct SavedGameRow: View {
+    let save: SaveInfo
+    let onLoad: () -> Void
+
+    var body: some View {
+        Button(action: onLoad) {
+            HStack(spacing: 16) {
+                Image(systemName: "doc.fill")
+                    .font(.title2)
+                    .foregroundStyle(.orange)
+                    .frame(width: 44, height: 44)
+                    .background(
+                        Circle()
+                            .fill(Color.orange.opacity(0.2))
+                    )
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(save.guildName)
+                        .font(.headline)
+                        .foregroundStyle(.white)
+
+                    Text("\(save.campaignName) • Season \(save.season)")
+                        .font(.subheadline)
+                        .foregroundStyle(.white.opacity(0.7))
+
+                    Text(save.displayDate)
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.5))
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .foregroundStyle(.white.opacity(0.3))
+            }
+            .padding(.vertical, 8)
         }
     }
 }
