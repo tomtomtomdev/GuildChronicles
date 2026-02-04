@@ -56,6 +56,7 @@ enum EventType: String, Codable, CaseIterable {
     case questCompleted
     case questFailed
     case questAbandoned
+    case lootObtained
 
     // Financial events
     case incomeReceived
@@ -93,6 +94,7 @@ enum EventType: String, Codable, CaseIterable {
         case .questCompleted: return "checkmark.seal.fill"
         case .questFailed: return "xmark.seal.fill"
         case .questAbandoned: return "escape"
+        case .lootObtained: return "gift.fill"
         case .incomeReceived: return "plus.circle.fill"
         case .expensePaid: return "minus.circle.fill"
         case .loanTaken: return "banknote.fill"
@@ -120,7 +122,7 @@ enum EventType: String, Codable, CaseIterable {
             return .orange
         case .adventurerRecovered, .questCompleted, .incomeReceived, .loanRepaid, .patronHappy, .voteOfConfidence:
             return .green
-        case .adventurerLevelUp:
+        case .adventurerLevelUp, .lootObtained:
             return .yellow
         case .expensePaid, .loanTaken:
             return .orange
