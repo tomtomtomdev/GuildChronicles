@@ -34,6 +34,10 @@ struct Adventurer: Identifiable, Codable, Equatable, Hashable {
     var currentCondition: AdventurerCondition
     var injuries: [Injury]
 
+    // Experience & Progression
+    var currentExperience: Int
+    var totalExperienceEarned: Int
+
     // Visibility (Section 3.2 - Attribute Masking)
     var isFullyKnown: Bool
 
@@ -56,6 +60,22 @@ struct Adventurer: Identifiable, Codable, Equatable, Hashable {
 
     var isAvailableForQuests: Bool {
         currentCondition == .healthy && !isInjured
+    }
+
+    /// XP needed to reach next level
+    var experienceToNextLevel: Int {
+        level.experienceRequired
+    }
+
+    /// Progress toward next level (0.0 to 1.0)
+    var experienceProgress: Double {
+        guard experienceToNextLevel > 0 else { return 1.0 }
+        return Double(currentExperience) / Double(experienceToNextLevel)
+    }
+
+    /// Whether adventurer has enough XP to level up
+    var canLevelUp: Bool {
+        level != .legendary && currentExperience >= experienceToNextLevel
     }
 
     /// Estimated market value based on attributes and level
@@ -129,6 +149,8 @@ struct Adventurer: Identifiable, Codable, Equatable, Hashable {
             statistics: AdventurerStatistics(),
             currentCondition: .healthy,
             injuries: [],
+            currentExperience: 0,
+            totalExperienceEarned: level.startingExperience,
             isFullyKnown: false
         )
     }
@@ -238,6 +260,45 @@ extension AdventurerLevel {
         case .master: return 500
         case .grandmaster: return 1500
         case .legendary: return 5000
+        }
+    }
+
+    /// XP required to reach next level from this level
+    var experienceRequired: Int {
+        switch self {
+        case .apprentice: return 100
+        case .journeyman: return 300
+        case .adept: return 600
+        case .expert: return 1200
+        case .master: return 2500
+        case .grandmaster: return 5000
+        case .legendary: return 0  // Max level
+        }
+    }
+
+    /// Estimated total XP an adventurer at this level would have earned
+    var startingExperience: Int {
+        switch self {
+        case .apprentice: return 0
+        case .journeyman: return 100
+        case .adept: return 400
+        case .expert: return 1000
+        case .master: return 2200
+        case .grandmaster: return 4700
+        case .legendary: return 9700
+        }
+    }
+
+    /// Next level in progression
+    var nextLevel: AdventurerLevel? {
+        switch self {
+        case .apprentice: return .journeyman
+        case .journeyman: return .adept
+        case .adept: return .expert
+        case .expert: return .master
+        case .master: return .grandmaster
+        case .grandmaster: return .legendary
+        case .legendary: return nil
         }
     }
 }

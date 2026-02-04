@@ -154,6 +154,9 @@ struct AdventurerHeaderCard: View {
                     .font(.caption)
                     .foregroundStyle(.white.opacity(0.7))
             }
+
+            // Experience progress
+            ExperienceProgressBar(adventurer: adventurer)
         }
         .padding()
         .background(
@@ -182,6 +185,83 @@ struct StatusBadge: View {
                 Capsule()
                     .fill(color.opacity(0.3))
             )
+    }
+}
+
+struct ExperienceProgressBar: View {
+    let adventurer: Adventurer
+
+    private var progressColor: Color {
+        if adventurer.canLevelUp { return .yellow }
+        if adventurer.experienceProgress >= 0.75 { return .green }
+        if adventurer.experienceProgress >= 0.5 { return .blue }
+        return .cyan
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Image(systemName: "sparkles")
+                    .foregroundStyle(.cyan)
+                Text("Experience")
+                    .font(.caption)
+                    .foregroundStyle(.white.opacity(0.7))
+
+                Spacer()
+
+                if adventurer.level == .legendary {
+                    Text("MAX LEVEL")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.yellow)
+                } else if adventurer.canLevelUp {
+                    Text("READY TO LEVEL UP!")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.yellow)
+                } else {
+                    Text("\(adventurer.currentExperience) / \(adventurer.experienceToNextLevel) XP")
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.7))
+                }
+            }
+
+            // Progress bar
+            GeometryReader { geometry in
+                ZStack(alignment: .leading) {
+                    // Background
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color.white.opacity(0.1))
+                        .frame(height: 8)
+
+                    // Progress
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(progressColor)
+                        .frame(width: geometry.size.width * adventurer.experienceProgress, height: 8)
+                }
+            }
+            .frame(height: 8)
+
+            // Level indicator
+            HStack {
+                Text(adventurer.level.displayName)
+                    .font(.caption2)
+                    .foregroundStyle(.white.opacity(0.5))
+
+                Spacer()
+
+                if let nextLevel = adventurer.level.nextLevel {
+                    Text(nextLevel.displayName)
+                        .font(.caption2)
+                        .foregroundStyle(.white.opacity(0.5))
+                }
+            }
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color.white.opacity(0.05))
+        )
     }
 }
 
